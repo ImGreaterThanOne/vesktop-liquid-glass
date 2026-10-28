@@ -1,0 +1,1011 @@
+/**
+ * @name Liquid Glass
+ * @description Near-black Discord with iOS-26-style liquid glass: dark frosted floating panels, specular rim light, translucent menus and modals.
+ * @author fedora-desktop
+ * @version 1.0.0
+ */
+
+/* ---- tweakables ---------------------------------------------------- */
+:root {
+    --lg-blur: 28px;            /* how frosted the glass is */
+    --lg-saturate: 180%;        /* colour pulled through the glass */
+    --lg-radius: 30px;          /* panel corner radius: about half the width of the server pill, so every corner shares its curvature */
+    --lg-gap: 10px;             /* spacing between floating panels */
+    --lg-tint: rgba(255, 255, 255, 0.035);     /* glass body */
+    --lg-rim: rgba(255, 255, 255, 0.13);        /* edge outline */
+    --lg-accent: #5865f2;       /* Discord blurple */
+    --lg-font: "Inter Display", "Inter", sans-serif;   /* same stand-in for SF Pro as the Spotify widget */
+    --lg-av: 1.6;               /* avatar zoom: 32px * 1.6 = 51px */
+    --lg-pill-pad: 5px;         /* gap between the avatar circle and the pill's edge */
+    /* --lg-avatar (the sharp 256px copy of YOUR avatar, used for the avatar and the pill's colour wash) is not
+       written here: vesktop-bridge reads it from the running client and appends it to the installed theme
+       (`:root { --lg-avatar: url(...) }` between "lg-avatar:auto" markers). Without it everything still works:
+       the avatar is just Discord's own 24px image and the wash is skipped. */
+    --custom-guild-list-padding: 8px;    /* gap between a server icon and the pill's edge (top and bottom too: concentric with the end caps) */
+    --lg-menu: rgba(10, 10, 12, 0.72);          /* menus, popouts, modals */
+
+    /* near-black backdrop with faint neutral light pools: they give the blur
+       something to frost without colouring anything. Swap for url(https://...)
+       to use a wallpaper. */
+    --lg-backdrop:
+        radial-gradient(55vmax 45vmax at 8% 4%, rgba(255, 255, 255, 0.07), transparent 62%),
+        radial-gradient(50vmax 40vmax at 94% 12%, rgba(150, 160, 255, 0.07), transparent 62%),
+        radial-gradient(55vmax 45vmax at 85% 98%, rgba(255, 255, 255, 0.05), transparent 62%),
+        #050506;
+}
+
+/* ---- font: Inter (the stand-in for Apple's SF Pro used on the Spotify widget) everywhere ---- */
+body {
+    --font-primary: "Inter", "Inter Display", "gg sans", "Noto Sans", sans-serif;
+    --font-display: "Inter Display", "Inter", "gg sans", "Noto Sans", sans-serif;
+    font-feature-settings: "cv11", "ss03", "calt";       /* single-storey a, round digits: closer to SF */
+    letter-spacing: -0.006em;
+}
+
+/* ---- backdrop & Discord's own colour variables ---------------------- */
+body,
+#app-mount {
+    background: var(--lg-backdrop) !important;
+    background-attachment: fixed !important;
+}
+
+.theme-dark:not(.custom-user-profile-theme),
+.theme-light:not(.custom-user-profile-theme) {
+    --app-frame-background: transparent;
+    --app-frame-border: transparent;
+    --background-base-low: transparent;
+    --background-base-lower: transparent;
+    --background-base-lowest: transparent;
+    --chat-background-default: transparent;
+    --background-secondary-alt: transparent;
+    --background-surface-high: var(--lg-menu);
+    --background-surface-higher: var(--lg-menu);
+    --background-surface-highest: var(--lg-menu);
+    --card-background-default: rgba(255, 255, 255, 0.045);
+    --modal-background: var(--lg-menu);
+    --modal-footer-background: rgba(255, 255, 255, 0.03);
+    --channeltextarea-background: rgba(255, 255, 255, 0.05);
+    --background-mod-subtle: rgba(255, 255, 255, 0.04);
+    --background-mod-muted: rgba(255, 255, 255, 0.06);
+    --background-mod-normal: rgba(255, 255, 255, 0.08);
+    --background-mod-strong: rgba(255, 255, 255, 0.12);
+    --background-brand: var(--lg-accent);
+    --elevation-low: none;
+    --elevation-medium: none;
+    --elevation-high: none;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-normal: rgba(255, 255, 255, 0.12);
+}
+
+/* ---- floating glass panels ------------------------------------------ */
+.guilds__5e434,                          /* server list */
+.sidebarList__5e434,                     /* channel / DM list */
+.activityPanel__5e434,                   /* Go Live / activity (top section, joined with voice) */
+.wrapper_e131a9,                         /* voice connection */
+.container__37e49,                       /* account row: its own pill */
+.chatContent_f75fb0,                     /* chat */
+.container_c8ffbb,                       /* member list */
+.content_f75fb0 > .membersWrap_c8ffbb,   /* forum member list */
+.chat_f75fb0 > .subtitleContainer_f75fb0 /* chat titlebar */ {
+    background:
+        radial-gradient(130% 70% at 0% 0%, rgba(255, 255, 255, 0.08), transparent 55%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015) 50%, rgba(255, 255, 255, 0.035)),
+        var(--lg-tint);
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate)) brightness(1.15);
+    border: 1px solid var(--lg-rim);
+    border-radius: var(--lg-radius);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),   /* specular top edge */
+        inset 1px 0 0 rgba(255, 255, 255, 0.09),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+        0 12px 40px rgba(0, 0, 0, 0.55);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* the chat title bar is short: smaller radius, nothing clipped */
+.chat_f75fb0 > .subtitleContainer_f75fb0 {
+    border-radius: 22px;
+    overflow: visible;
+}
+
+/* server list: a vertical pill with always-round icons */
+.guilds__5e434 {
+    border-radius: 999px;
+}
+.guilds__5e434 foreignObject {               /* drop Discord's squircle/blob mask (also loses its badge notch) */
+    mask: none !important;
+    -webkit-mask: none !important;
+}
+.guilds__5e434 foreignObject > div,
+.guilds__5e434 .folderButton__48112 {
+    border-radius: 50% !important;
+    overflow: hidden;
+}
+
+/* server list card: Discord sizes the bar for a flush 72px strip, so tell it the
+   real width of a card (icon + padding on both sides + the 1px borders) */
+body {
+    --custom-guild-list-width: calc(var(--guildbar-avatar-size, 48px) + var(--custom-guild-list-padding) * 2 + 2px);
+}
+.scroller_ef3116 {
+    padding-top: var(--custom-guild-list-padding) !important;
+    padding-bottom: var(--custom-guild-list-padding);
+}
+.folderGroup__48112,
+.listItem__650eb {
+    width: calc(var(--guildbar-avatar-size, 48px) + var(--custom-guild-list-padding) * 2);
+}
+
+/* layout: pull the panels apart so the aurora shows between them */
+.sidebar__5e434 {
+    margin: 0 var(--lg-gap) var(--lg-gap) var(--lg-gap);
+}
+.sidebar__5e434:after {
+    display: none;
+}
+.wrapper_ef3116 {
+    mask: none;     /* drop Discord's fade mask on the server list (keep the list itself visible!) */
+}
+.guilds__5e434 {
+    margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--lg-gap));
+    margin-right: var(--lg-gap);
+}
+.sidebarList__5e434 {
+    margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--lg-gap));
+}
+.panels__5e434 {                         /* transparent stack: top section + account pill */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+/* Go Live + voice read as one card: flatten the seam between them */
+.activityPanel__5e434:has(+ .wrapper_e131a9) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+}
+.activityPanel__5e434 + .wrapper_e131a9 {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top-color: rgba(255, 255, 255, 0.07);
+    box-shadow:                               /* no top highlight: the seam is just a hairline */
+        inset 1px 0 0 rgba(255, 255, 255, 0.09),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+        0 12px 40px rgba(0, 0, 0, 0.55);
+}
+/* inner padding so content clears the 30px corners (the icon tile and the button row
+   used to poke into the curve and got clipped) */
+.activityPanel__5e434 {
+    padding: 6px 14px 3px !important;
+}
+.wrapper_e131a9 .container_e131a9 {
+    padding: 8px 12px 12px !important;
+    border-radius: 0 !important;
+}
+/* space before the pill only when something sits above it */
+.activityPanel__5e434 ~ .container__37e49,
+.wrapper_e131a9 ~ .container__37e49 {
+    margin-top: var(--lg-gap) !important;
+}
+/* the card already reserves room for the user panel (margin above): zero Discord's own
+   reserve inside the lists, otherwise it is counted twice and the lists stop short */
+.container__2637a {
+    padding-bottom: 0;
+}
+.scroller__629e4,            /* channel list */
+.scroller__99e7c {           /* DM list */
+    margin-bottom: 0;
+}
+.chat_f75fb0,
+.page__5e434,
+.container__133bf {
+    background: none !important;
+    border: none !important;
+}
+.page__5e434,
+.container__133bf {
+    padding-bottom: var(--lg-gap);
+    padding-right: var(--lg-gap);
+}
+.subtitleContainer_f75fb0 {
+    margin-bottom: var(--lg-gap);
+}
+.title_f75fb0,
+.container__2637a,
+.header_f37cb1,
+.privateChannels_e6b769,
+.scroller__99e7c,
+.members_c8ffbb,
+.member_c8ffbb,
+.tabBody__133bf {
+    background: none !important;
+    border: none;
+}
+.container_c8ffbb {
+    margin-left: var(--lg-gap);
+    height: auto;
+}
+
+/* ---- user panel: pill with a big avatar that fits its rounded end ------------ */
+.container__37e49 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    min-height: 0;
+    margin: 0 !important;
+    padding: var(--lg-pill-pad) 14px var(--lg-pill-pad) var(--lg-pill-pad);
+    border-radius: 999px;
+    overflow: hidden;                        /* the glow lives inside the pill: the window edge can't cut it */
+}
+.container__37e49::before {                  /* ambient wash: the avatar, blurred and stretched, so it is coloured like it */
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background: var(--lg-avatar) -6px 50% / 150px auto no-repeat;
+    filter: blur(20px) saturate(2.3) brightness(1.25);
+    opacity: 0.6;
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 62%);
+            mask-image: linear-gradient(90deg, #000 0%, transparent 62%);
+    z-index: -1;
+    pointer-events: none;
+}
+.accountPopoutButtonWrapper__37e49 {
+    display: flex;
+    align-items: center;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+.avatar__37e49 {                             /* zoom scales the 32px avatar and its status dot together */
+    zoom: var(--lg-av);
+    position: relative;
+    z-index: 0;
+    flex: none;
+    margin: 0 4px 0 0;
+}
+.avatar__37e49 img {                         /* sharp 256px copy instead of the 24px one */
+    content: var(--lg-avatar);
+    object-fit: cover;
+}
+.avatar__37e49::before {                     /* glow: blurs and saturates whatever is behind this ring - the avatar itself - so it always has the avatar's colours and needs no image URL */
+    content: "";
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    backdrop-filter: blur(9px) saturate(2.6) brightness(1.35);
+    -webkit-mask: radial-gradient(closest-side, transparent 52%, #000 56%, #000 70%, transparent 100%);
+            mask: radial-gradient(closest-side, transparent 52%, #000 56%, #000 70%, transparent 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+.avatar__37e49::after {                      /* thin rim light around the circle */
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    background: conic-gradient(from 205deg,
+        rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 28%,
+        rgba(255, 255, 255, 0.40) 55%, rgba(255, 255, 255, 0) 78%,
+        rgba(255, 255, 255, 0.95));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.4px), #000 calc(100% - 1px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 1.4px), #000 calc(100% - 1px));
+    pointer-events: none;
+}
+.nameTag__37e49 {
+    margin-left: 0;
+}
+.nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+    font-family: var(--lg-font) !important;
+    font-size: 21px !important;
+    font-weight: 700 !important;
+    line-height: 26px !important;
+    letter-spacing: -0.015em;                /* SF-style tight tracking at display sizes */
+    height: auto !important;
+}
+.nameTag__37e49 .panelSubtextContainer__37e49,
+.nameTag__37e49 [class*="subtext_"] {
+    font-family: var(--lg-font) !important;
+    font-size: 13px !important;
+    font-weight: 500;
+    line-height: 17px !important;
+    height: auto !important;
+}
+
+/* no grey hover plate behind the avatar + name: the swell and glow are the hover feedback */
+[class*="accountPopoutButton"],
+[class*="accountPopoutButton"]:hover,
+[class*="accountPopoutButton"]:active,
+[class*="accountPopoutButton"]::before,
+[class*="accountPopoutButton"]::after,
+.nameTag__37e49,
+.nameTag__37e49:hover {
+    background: none !important;
+    box-shadow: none !important;
+}
+
+/* The pill is only ~310px wide, and avatar + three discs left the name block 73px: the status
+   ("и очень даже неплохо", 130px) and the @username (103px) were cut to "и очень даже непло...".
+   Discs are 36px with 4px gaps now (more room), and the status wraps to two lines instead of
+   ending in an ellipsis; the pill simply grows a few px taller. */
+.buttons__37e49 {
+    gap: 4px;
+}
+.container__37e49 {
+    padding-right: 12px;
+}
+.nameTag__37e49 [class*="subtext_"],
+.nameTag__37e49 [class*="hoverRoll_"],
+.nameTag__37e49 [class*="default_"] {
+    height: auto !important;
+    min-height: 17px;
+}
+.nameTag__37e49 [class*="default_"] > [class*="container_c9d15c"] {
+    align-items: center;                 /* the green sharing indicator sits in the middle of the wrapped text, not on its first line */
+}
+.nameTag__37e49 [class*="activityStatusText_"][class*="truncated_"] {
+    white-space: normal !important;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden !important;
+    overflow-wrap: anywhere;
+    font-size: 12px !important;
+    line-height: 15px !important;
+}
+.nameTag__37e49 [class*="hovered_"] {            /* the @username that rolls in on hover: one line if it fits, else wraps */
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    font-size: 11.5px !important;
+    line-height: 15px !important;
+}
+
+/* account-pill controls: mic, headphones and settings are round glass discs; the little
+   input/output-device chevrons next to mic and headphones are gone */
+.buttons__37e49 [class*="buttonChevron_"] {
+    display: none !important;
+}
+.audioButtonParent__5e764 {
+    width: auto;
+}
+.audioButtonParent__5e764 button[class*="audioButtonWithMenu_"],
+.buttons__37e49 > button {
+    width: 36px;
+    height: 36px;
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.18), transparent 60%),
+        rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 3px 10px rgba(0, 0, 0, 0.35);
+    transition: scale 0.26s var(--lg-spring), box-shadow 0.3s var(--lg-ease), filter 0.25s var(--lg-ease);
+}
+.audioButtonParent__5e764 button[class*="audioButtonWithMenu_"]:hover,
+.buttons__37e49 > button:hover {
+    scale: 1.18 !important;
+    filter: brightness(1.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.24), 0 5px 14px rgba(0, 0, 0, 0.4);
+}
+.audioButtonParent__5e764 button[class*="audioButtonWithMenu_"]:active,
+.buttons__37e49 > button:active {
+    scale: 0.92 !important;
+}
+
+/* voice-card action buttons (camera, share screen, activities, soundboard): glass pills that
+   swell and light up like the mic / headphones do; a switched-on one glows green */
+.actionButtons_e131a9 button[class*="buttonColor_"] {
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.20), transparent 60%),
+        rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: scale 0.26s var(--lg-spring), box-shadow 0.3s var(--lg-ease), filter 0.25s var(--lg-ease), background-color 0.25s var(--lg-ease);
+}
+.actionButtons_e131a9 button[class*="buttonColor_"]:hover {
+    scale: 1.14;
+    filter: brightness(1.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 22px rgba(255, 255, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.actionButtons_e131a9 button[class*="buttonColor_"]:active {
+    scale: 0.93;
+}
+.actionButtons_e131a9 button[class*="buttonActive_"] {
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.25), transparent 60%),
+        rgba(61, 220, 132, 0.30) !important;
+    border-color: rgba(61, 220, 132, 0.65);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 0 20px rgba(61, 220, 132, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* hover on the avatar / name: both scale up, the avatar's halo and the pill's wash flare,
+   the name gets a soft glow */
+@keyframes lg-halo {
+    0%, 100% { opacity: 0.85; }
+    50%      { opacity: 1; }
+}
+.avatar__37e49,
+.nameTag__37e49 {
+    transition: scale 0.32s var(--lg-spring);
+}
+.avatar__37e49::before {
+    transition: inset 0.32s var(--lg-ease), backdrop-filter 0.32s var(--lg-ease), opacity 0.32s var(--lg-ease);
+}
+.container__37e49::before {
+    transition: opacity 0.35s var(--lg-ease);
+}
+.nameTag__37e49 {
+    transform-origin: left center;
+}
+.nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+    transition: text-shadow 0.32s var(--lg-ease);
+}
+.accountPopoutButtonWrapper__37e49:hover .avatar__37e49 {
+    scale: 1.12;
+}
+.accountPopoutButtonWrapper__37e49:hover .nameTag__37e49 {
+    scale: 1.06;
+}
+.accountPopoutButtonWrapper__37e49:hover .avatar__37e49::before {
+    inset: -19px;
+    backdrop-filter: blur(12px) saturate(3) brightness(1.5);
+    animation: lg-halo 1.8s ease-in-out infinite;
+}
+.container__37e49:has(.accountPopoutButtonWrapper__37e49:hover)::before {
+    opacity: 0.95;
+}
+.accountPopoutButtonWrapper__37e49:hover .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.55),
+        0 0 24px rgba(120, 140, 255, 0.75);
+}
+
+/* context-menu items rise in one after another */
+@keyframes lg-menu-item {
+    from { opacity: 0; translate: 0 6px; }
+    to   { opacity: 1; translate: 0 0; }
+}
+[role="menu"] [role="menuitem"],
+[role="menu"] [role="menuitemcheckbox"],
+[role="menu"] [role="menuitemradio"] {
+    animation: lg-menu-item 0.28s var(--lg-out, var(--lg-ease)) backwards;
+}
+[role="menu"] [role="menuitem"]:nth-child(2) { animation-delay: 0.03s; }
+[role="menu"] [role="menuitem"]:nth-child(3) { animation-delay: 0.06s; }
+[role="menu"] [role="menuitem"]:nth-child(4) { animation-delay: 0.09s; }
+[role="menu"] [role="menuitem"]:nth-child(5) { animation-delay: 0.12s; }
+[role="menu"] [role="menuitem"]:nth-child(6) { animation-delay: 0.15s; }
+[role="menu"] [role="menuitem"]:nth-child(7) { animation-delay: 0.18s; }
+[role="menu"] [role="menuitem"]:nth-child(8) { animation-delay: 0.21s; }
+[role="menu"] [role="menuitem"]:nth-child(n+9) { animation-delay: 0.24s; }
+
+/* ---- text fits: names wrap onto a second line instead of ending in "..." ----------------- */
+/* channel names, voice-channel users, member names and the voice-connection label. Three lines at most
+   (a name longer than three lines still gets one ellipsis at the end); a single long word with no spaces is
+   broken where it has to be. The rows above them grow to fit. */
+:is(.sidebarList__5e434, .container_c8ffbb) :is([class*="name_"], [class*="usernameFont_"], [class*="username_"]) {
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+}
+.sidebarList__5e434 li[class*="containerDefault_"],
+.sidebarList__5e434 li[class*="containerDefault_"] > div,
+.sidebarList__5e434 [class*="link_"],
+.sidebarList__5e434 [class*="linkTop_"] {
+    height: auto !important;
+    min-height: 32px;
+}
+.sidebarList__5e434 [class*="link_"] {
+    padding-block: 3px;
+}
+/* voice-channel user rows have a fixed 32px outer box: a wrapped name made the inner row 46px and it
+   spilled over the row below, so the rows now take their content's height */
+[class*="voiceUser_"],
+[class*="voiceUser_"] > [class*="content_"],
+.sidebarList__5e434 [class*="draggable_"] {      /* the per-row wrapper that really fixes the 32px */
+    height: auto !important;
+    min-height: 32px;
+}
+
+.wrapper_e131a9 .connection_e131a9 {                /* the row is a fixed 32px but holds the (now wrapped) status + channel + timer (~70px): it used to spill out and get clipped, so let it grow and stretch the whole card */
+    height: auto !important;
+    min-height: 32px;
+    align-items: flex-start;
+}
+.wrapper_e131a9 .container_e131a9 {
+    height: auto !important;
+}
+.panels__5e434 [class*="rtcConnectionStatus_"] [class*="default_"],
+.panels__5e434 [class*="rtcConnectionStatus_"] [class*="hovered_"],
+.panels__5e434 [class*="labelWrapper_"] > div {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    height: auto !important;
+}
+
+/* ShowMeYourName was switched off, but a plugin's patches stay in the page until the client restarts,
+   so its "(username)" suffix after every chat name kept showing. Hide it directly (harmless once gone). */
+.vc-smyn-suffix {
+    display: none !important;
+}
+
+/* ---- inputs, menus, popouts, modals --------------------------------- */
+[class*="channelTextArea_"] {
+    border-radius: 22px;
+    border: 1px solid var(--lg-rim);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 6px 24px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(18px) saturate(160%);
+}
+[class*="menu_"],
+[class*="popout_"],
+[role="dialog"] {
+    background: var(--lg-menu);
+    backdrop-filter: blur(34px) saturate(190%) brightness(1.1);
+    border: 1px solid var(--lg-rim);
+    border-radius: 20px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 18px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- settings: the full-page settings view as frosted glass ----------------------- */
+.standardSidebarView__23e6b {
+    background: linear-gradient(160deg, rgba(40, 40, 52, 0.55), rgba(14, 14, 20, 0.62)) !important;
+    backdrop-filter: blur(34px) saturate(170%);
+}
+.sidebarRegion__23e6b {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-right: 1px solid var(--lg-rim);
+}
+.contentRegion__23e6b,
+.contentRegionScroller__23e6b {
+    background: none !important;
+}
+
+/* ---- declutter: Nitro, Shop and Quests entries in the home list are hidden; the plugin's "Read All" is a tiny pill ---- */
+.sidebarList__5e434 li:has(a[href="/store"]),
+.sidebarList__5e434 li:has(a[href="/shop"]),
+.sidebarList__5e434 li:has(a[href="/quest-home"]) {
+    display: none !important;
+}
+.vc-ranb-button {
+    font-size: 9px !important;
+    line-height: 1 !important;
+    padding: 3px 7px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid var(--lg-rim) !important;
+}
+
+/* ---- details ---------------------------------------------------------- */
+[class*="message_"]:hover {
+    border-radius: 14px;
+}
+button[class*="lookFilled_"] {
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22) !important;
+    border: 2px solid transparent !important;
+    background-clip: padding-box !important;
+    border-radius: 999px !important;
+}
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+/* ---- motion ------------------------------------------------------------ */
+/* Uses the individual `scale` / `translate` properties, not `transform`:
+   Discord positions menus and popouts itself and would fight over transform. */
+:root {
+    --lg-out: cubic-bezier(0.22, 0.61, 0.36, 1);   /* plain ease-out: entrances grow monotonically, never overshoot */
+    --lg-spring: cubic-bezier(0.22, 1.2, 0.36, 1);   /* soft overshoot, like iOS springs */
+    --lg-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+@keyframes lg-pop {
+    from { opacity: 0; scale: 0.94; translate: 0 8px; }
+    to   { opacity: 1; scale: 1;    translate: 0 0; }
+}
+/* Menus, popouts and dialogs must NOT animate `scale`/`translate`: Discord measures their box
+   when they open to decide where to place them, and measuring one that is still at 8% size put
+   the profile popout ~200px too low, hanging off the screen. A clip-path reveal grows them from
+   the centre without ever changing their measured rectangle. */
+@keyframes lg-reveal {
+    from { opacity: 0; filter: blur(10px); clip-path: inset(48% 48% 48% 48% round 20px); }
+    to   { opacity: 1; filter: blur(0);    clip-path: inset(0 0 0 0 round 20px); }
+}
+[class*="menu_"],
+[class*="popout_"],
+[role="dialog"] {
+    animation: lg-reveal 0.45s var(--lg-out) backwards;
+}
+
+/* ---- materialise: whatever appears swells out of its own centre, like a droplet condensing ---- */
+/* Entry animations only run when an element is created, so this covers app start, switching
+   chats, joining a call, new messages, opening menus. Each one starts small and blurred at its
+   centre, grows smoothly to full size with no overshoot. Filled with `backwards` so nothing keeps a transform
+   afterwards. Big panels skip the blur (a blurred full-size layer is costly). */
+@keyframes lg-flow {                       /* menus, dialogs, cards */
+    from { opacity: 0; scale: 0.08; filter: blur(10px); }
+    to   { opacity: 1; scale: 1;    filter: blur(0); }
+}
+@keyframes lg-flow-small {                 /* icons, tiles, members */
+    from { opacity: 0; scale: 0.05; filter: blur(8px); }
+    to   { opacity: 1; scale: 1;    filter: blur(0); }
+}
+@keyframes lg-flow-row {                   /* wide rows: messages, channels, embeds */
+    from { opacity: 0; scale: 0.3;  filter: blur(6px); }
+    to   { opacity: 1; scale: 1;    filter: blur(0); }
+}
+@keyframes lg-flow-panel {                 /* big columns: no blur */
+    from { opacity: 0; scale: 0.6; }
+    to   { opacity: 1; scale: 1; }
+}
+.guilds__5e434            { animation: lg-flow-panel 0.55s 0.00s var(--lg-out) backwards; }
+.sidebarList__5e434       { animation: lg-flow-panel 0.55s 0.06s var(--lg-out) backwards; }
+.chatContent_f75fb0       { animation: lg-flow-panel 0.275s 0.06s var(--lg-out) backwards; }
+.container_c8ffbb         { animation: lg-flow-panel 0.55s 0.18s var(--lg-out) backwards; }
+.chat_f75fb0 > .subtitleContainer_f75fb0 { animation: lg-flow-panel 0.275s 0.05s var(--lg-out) backwards; }
+/* user panel: the cards swell in on login and when a call / stream starts */
+.activityPanel__5e434,
+.wrapper_e131a9,
+.container__37e49 {
+    animation: lg-flow 0.55s var(--lg-out) backwards;
+}
+.container__37e49 { animation-delay: 0.22s; }
+/* small things */
+[data-list-item-id^="guildsnav___"],
+[data-list-item-id^="private-channels"],
+.member_c8ffbb,
+[class*="voiceUser_adebba"],
+.tile__2f4f7 {
+    animation: lg-flow-small 0.45s var(--lg-out) backwards;
+}
+/* wide things */
+[class*="wrapperCommon_"][class*="clickable_"],
+[class*="embedWrapper_"],
+[class*="imageWrapper_"],
+[class*="messageAttachment_"] {
+    animation: lg-flow-row 0.42s var(--lg-out) backwards;
+}
+/* panel rim lights up when you move over it */
+.guilds__5e434,
+.sidebarList__5e434,
+.container__37e49,
+.chatContent_f75fb0,
+.container_c8ffbb {
+    transition: border-color 0.3s var(--lg-ease), box-shadow 0.3s var(--lg-ease);
+}
+.guilds__5e434:hover,
+.sidebarList__5e434:hover,
+.container__37e49:hover,
+.chatContent_f75fb0:hover,
+.container_c8ffbb:hover {
+    border-color: rgba(255, 255, 255, 0.20);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        inset 1px 0 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+        0 14px 44px rgba(0, 0, 0, 0.6);
+}
+[class*="message_"] {
+    transition: background-color 0.18s var(--lg-ease), border-radius 0.18s var(--lg-ease);
+}
+[class*="channelTextArea_"] {
+    transition: border-color 0.25s var(--lg-ease), box-shadow 0.25s var(--lg-ease);
+}
+[class*="channelTextArea_"]:focus-within {
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+button[class*="lookFilled_"],
+button[class*="lookBlank_"] {
+    transition: scale 0.22s var(--lg-spring), filter 0.2s var(--lg-ease);
+}
+button[class*="lookFilled_"]:hover  { scale: 1.05; filter: brightness(1.12); }   /* labelled buttons */
+button[class*="lookBlank_"]:hover   { scale: 1.2; }                                /* icon buttons: mic, headphones, settings... */
+button[class*="lookFilled_"]:active { scale: 0.95; }
+button[class*="lookBlank_"]:active  { scale: 0.9; }
+
+/* ---- everything reacts: lists, icons, messages, badges ------------------------ */
+@keyframes lg-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes lg-pulse {
+    0%, 100% { scale: 1; }
+    50%      { scale: 1.14; }
+}
+
+/* server icons: spring up on hover, squeeze on press */
+[data-list-item-id^="guildsnav___"] {
+    transition: scale 0.26s var(--lg-spring);
+}
+[data-list-item-id^="guildsnav___"]:hover  { scale: 1.14; }
+[data-list-item-id^="guildsnav___"]:active { scale: 0.92; }
+
+/* dock-style magnification: the neighbours of a hovered server icon swell and lean away,
+   the next ones a little less (pure CSS, :has() on the sibling list items) */
+.listItem__650eb [data-list-item-id^="guildsnav___"] {
+    transition: scale 0.26s var(--lg-spring), translate 0.26s var(--lg-spring);
+}
+.listItem__650eb:hover + .listItem__650eb [data-list-item-id^="guildsnav___"],
+.listItem__650eb:has(+ .listItem__650eb:hover) [data-list-item-id^="guildsnav___"] {
+    scale: 1.09;
+}
+.listItem__650eb:hover + .listItem__650eb [data-list-item-id^="guildsnav___"] {
+    translate: 0 4px;
+}
+.listItem__650eb:has(+ .listItem__650eb:hover) [data-list-item-id^="guildsnav___"] {
+    translate: 0 -4px;
+}
+.listItem__650eb:hover + .listItem__650eb + .listItem__650eb [data-list-item-id^="guildsnav___"],
+.listItem__650eb:has(+ .listItem__650eb + .listItem__650eb:hover) [data-list-item-id^="guildsnav___"] {
+    scale: 1.035;
+}
+
+/* channel rows, DM rows and members lean toward the cursor */
+[class*="containerDefault_"] [class*="link_"],
+[class*="wrapperCommon_"][class*="clickable_"],
+[data-list-item-id^="private-channels"],
+.member_c8ffbb {
+    transition: translate 0.28s var(--lg-spring), background-color 0.18s var(--lg-ease);
+}
+[class*="containerDefault_"] [class*="link_"]:hover,
+[class*="wrapperCommon_"][class*="clickable_"]:hover,
+[data-list-item-id^="private-channels"]:hover,
+.member_c8ffbb:hover {
+    translate: 3px 0;
+}
+[class*="containerDefault_"] [class*="link_"]:active,
+[class*="wrapperCommon_"][class*="clickable_"]:active,
+[data-list-item-id^="private-channels"]:active {
+    scale: 0.98;
+}
+
+/* channel rows: hovering lights up a glass plate with an accent bar growing at the left edge,
+   a sheen that sweeps across once, and the # icon tilting up */
+@keyframes lg-sweep {
+    from { translate: -110% 0; opacity: 1; }
+    to   { translate: 110% 0;  opacity: 1; }
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]) {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    transition: translate 0.28s var(--lg-spring), background-color 0.18s var(--lg-ease), box-shadow 0.3s var(--lg-ease);
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"])::before {      /* accent bar */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(var(--lg-accent), #9bb4ff);
+    box-shadow: 0 0 12px var(--lg-accent);
+    scale: 1 0;
+    transition: scale 0.32s var(--lg-spring);
+    pointer-events: none;
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"])::after {       /* sweeping sheen */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.20) 50%, transparent 68%);
+    translate: -110% 0;
+    opacity: 0;
+    pointer-events: none;
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]):hover {
+    background:
+        radial-gradient(120% 160% at 0% 0%, rgba(255, 255, 255, 0.14), transparent 60%),
+        rgba(255, 255, 255, 0.07) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+        0 6px 18px rgba(0, 0, 0, 0.28),
+        0 0 20px rgba(88, 101, 242, 0.18);
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]):hover::before {
+    scale: 1 1;
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]):hover::after {
+    animation: lg-sweep 0.7s var(--lg-out);
+}
+svg[class*="icon__"] {
+    transition: scale 0.3s var(--lg-spring), rotate 0.3s var(--lg-spring), filter 0.3s var(--lg-ease);
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]):hover svg[class*="icon__"] {
+    scale: 1.22;
+    rotate: -8deg;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+}
+
+/* toolbar and message icons, reactions, emoji */
+[class*="toolbar_"] [role="button"],
+[class*="buttonContainer_"] [role="button"],
+[class*="channelTextArea_"] [role="button"],
+[class*="reaction_"],
+[class*="emojiItem_"] {
+    transition: scale 0.22s var(--lg-spring), background-color 0.18s var(--lg-ease);
+}
+[class*="toolbar_"] [role="button"]:hover,
+[class*="buttonContainer_"] [role="button"]:hover,
+[class*="channelTextArea_"] [role="button"]:hover { scale: 1.2; }
+[class*="reaction_"]:hover   { scale: 1.1; }
+[class*="emojiItem_"]:hover  { scale: 1.3; }
+[class*="toolbar_"] [role="button"]:active,
+[class*="buttonContainer_"] [role="button"]:active,
+[class*="channelTextArea_"] [role="button"]:active,
+[class*="reaction_"]:active,
+[class*="emojiItem_"]:active { scale: 0.9; }
+
+/* messages as soft glass cards: rounded, they light up under the cursor, a message that pings you
+   gets an accent wash and edge. (Not tinting your own messages: CSS cannot tell whose a message is,
+   and grouped follow-up lines carry no author at all.) */
+li[id^="chat-messages-"] {
+    border-radius: 16px;
+    transition: background-color 0.18s var(--lg-ease), box-shadow 0.25s var(--lg-ease);
+}
+li[id^="chat-messages-"]:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+li[id^="chat-messages-"] [class*="mentioned_"],
+li[id^="chat-messages-"]:has([class*="mentioned_"]) {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--lg-accent) 20%, transparent), transparent 80%) !important;
+    box-shadow: inset 3px 0 0 var(--lg-accent);
+    border-radius: 16px;
+}
+
+/* typing indicator: a small glass pill, the dots glow in the accent colour */
+[class*="typing_"] {
+    border-radius: 999px;
+}
+[class*="typing_"] [class*="dots_"] *,
+[class*="typing_"] svg * {
+    fill: var(--lg-accent) !important;
+    filter: drop-shadow(0 0 4px var(--lg-accent));
+}
+
+/* new messages rise into place; the hover toolbar, tooltips and the modal veil ease in */
+[id^="chat-messages-"] {
+    animation: lg-flow-row 0.25s var(--lg-out) backwards;
+}
+[class*="buttonContainer_"] {
+    animation: lg-pop 0.18s var(--lg-spring) both;
+}
+[class*="tooltip_"] {                          /* measured and placed by Discord: opacity only */
+    animation: lg-fade 0.16s var(--lg-ease) backwards;
+}
+[class*="backdrop_"] {
+    animation: lg-fade 0.2s var(--lg-ease) both;
+}
+
+/* ---- entering a chat -------------------------------------------------------- */
+/* the loaded history cascades up from the newest message instead of popping in at once */
+@keyframes lg-chat-in {
+    from { opacity: 0; translate: 0 16px; scale: 0.99; }
+    to   { opacity: 1; translate: 0 0;    scale: 1; }
+}
+@keyframes lg-shimmer {
+    from { background-position: 160% 0; }
+    to   { background-position: -60% 0; }
+}
+[id^="chat-messages-"]:nth-last-child(2)  { animation-delay: 0.015s; }
+[id^="chat-messages-"]:nth-last-child(3)  { animation-delay: 0.03s; }
+[id^="chat-messages-"]:nth-last-child(4)  { animation-delay: 0.045s; }
+[id^="chat-messages-"]:nth-last-child(5)  { animation-delay: 0.06s; }
+[id^="chat-messages-"]:nth-last-child(6)  { animation-delay: 0.075s; }
+[id^="chat-messages-"]:nth-last-child(7)  { animation-delay: 0.09s; }
+[id^="chat-messages-"]:nth-last-child(8)  { animation-delay: 0.105s; }
+[id^="chat-messages-"]:nth-last-child(9)  { animation-delay: 0.12s; }
+[id^="chat-messages-"]:nth-last-child(10) { animation-delay: 0.135s; }
+[id^="chat-messages-"]:nth-last-child(n+11) { animation-delay: 0.15s; }
+
+/* the message area and the input slide in when a chat is (re)mounted; filled with `backwards`
+   so nothing is left transformed afterwards (that would trap fixed popouts) */
+.messagesWrapper__36d07 {
+    animation: lg-chat-in 0.2s var(--lg-spring) backwards;
+}
+[class*="channelTextArea_"] {
+    animation: lg-chat-in 0.225s 0.04s var(--lg-spring) backwards;
+}
+
+/* the loading skeleton: a glass sweep runs across it while it waits, then it fades out with the content */
+.wrapper_cdf8a9 {
+    position: relative;
+    animation: lg-fade 0.1s var(--lg-ease) both;
+}
+.wrapper_cdf8a9::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.16) 50%, transparent 62%) 160% 0 / 250% 100% no-repeat;
+    mix-blend-mode: overlay;
+    animation: lg-shimmer 1.4s linear infinite;
+}
+
+/* ---- speaking: a solid green ring grows out of the avatar, the avatar swells and glows ---- */
+/* Discord marks a speaking call tile only by an inline box-shadow on its border layer
+   (var(--status-speaking)), hence the :has() + attribute match; the voice-channel list
+   uses .speaking_adebba. The ring is the avatar's own `outline` (it follows the circle),
+   hugging the edge with no gap so it reads as part of the avatar. */
+:root {
+    --lg-speak: var(--status-speaking, #23a55a);
+    --lg-speak-glow: color-mix(in srgb, var(--lg-speak) 70%, #7dffa8);   /* brighter than the ring so it reads on dark */
+}
+@keyframes lg-speak-glow {                 /* the glow breathes while the person keeps talking */
+    from { box-shadow: var(--sp-glow-lo); }
+    to   { box-shadow: var(--sp-glow-hi); }
+}
+.avatarWrapper_fb62e2,
+.avatarSpeakingOutline_adebba {
+    outline: 0 solid transparent;
+    transition:
+        outline-width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), outline-color 0.25s var(--lg-ease),   /* the ring only grows out of the edge and back into it: no overshoot */
+        scale 0.3s var(--lg-spring), box-shadow 0.35s var(--lg-ease);
+}
+/* Discord's own speaking border around the whole tile (an inline inset box-shadow) is gone: the
+   avatar's ring and glow are the speaking cue now. Only the visual is removed - the inline style
+   stays, and the selectors above still match on it. */
+.border__2f4f7 {
+    box-shadow: none !important;
+}
+/* call tiles (big avatar) */
+.tile__2f4f7:has(.border__2f4f7[style*="status-speaking"]) .avatarWrapper_fb62e2 {
+    --sp-glow-lo: 0 0 22px 5px color-mix(in srgb, var(--lg-speak-glow) 75%, transparent), 0 0 52px 12px color-mix(in srgb, var(--lg-speak-glow) 40%, transparent);
+    --sp-glow-hi: 0 0 34px 9px color-mix(in srgb, var(--lg-speak-glow) 95%, transparent), 0 0 80px 22px color-mix(in srgb, var(--lg-speak-glow) 60%, transparent);
+    outline: 4px solid var(--lg-speak);
+    outline-offset: 0;
+    scale: 1.08;
+    box-shadow: var(--sp-glow-lo);
+    animation: lg-speak-glow 1.1s 0.3s ease-in-out infinite alternate;
+}
+/* voice channel list (small avatar) */
+.speaking_adebba.speaking_adebba .avatarSpeakingOutline_adebba.avatarSpeakingOutline_adebba {
+    --sp-glow-lo: 0 0 9px 2px color-mix(in srgb, var(--lg-speak-glow) 80%, transparent);
+    --sp-glow-hi: 0 0 15px 4px color-mix(in srgb, var(--lg-speak-glow) 100%, transparent);
+    outline: 2px solid var(--lg-speak);
+    outline-offset: 0;
+    scale: 1.14;
+    box-shadow: var(--sp-glow-lo);
+    animation: lg-speak-glow 1.1s 0.3s ease-in-out infinite alternate;
+}
+
+/* unread mention counters breathe */
+[class*="numberBadge_"] {
+    animation: lg-pulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+}
+
+/* respect the OS "reduce transparency" switch: solid dark panels */
+@media (prefers-reduced-transparency: reduce) {
+    .guilds__5e434, .sidebarList__5e434, .panels__5e434, .chatContent_f75fb0,
+    .container_c8ffbb, [class*="menu_"], [class*="popout_"], [role="dialog"] {
+        background: #0b0b0d;
+        backdrop-filter: none;
+    }
+}
