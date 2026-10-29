@@ -341,10 +341,11 @@ body {
 }
 
 /* ---- the account pill reacts when YOU talk (same grow-out ring + fading glow as in the voice chat) ----
-   Discord shows no speaking state here, so the bridge's page hook sets data-lg-self-speaking on <html>
-   (SpeakingStore.isCurrentUserSpeaking, polled every 120 ms). The ring + glow is an overlay ::after of the (unzoomed)
-   button wrapper sized to the avatar (--lg-av zoom is applied by hand, so it stays sharp: a filter on the zoomed
-   avatar rasterised it blurry), with a hole cut out around the status dot so the glow never lands on it.
+   Speaking is detected in pure CSS: while you talk, Discord adds a `.avatarBorder` element (inline box-shadow with
+   var(--status-speaking)) inside the pill's avatar, and removes it when you stop - so this works on any machine (e.g. Windows).
+   The Linux bridge also sets data-lg-self-speaking on <html> (SpeakingStore.isCurrentUserSpeaking); either one triggers it.
+   The ring + glow is an overlay ::after of the (unzoomed) button wrapper sized to the avatar (--lg-av zoom is applied by
+   hand, so it stays sharp: a filter on the zoomed avatar rasterised it blurry).
    --gk/--gb as for the cards. Idle: the rim light turns slowly and the avatar-coloured halo breathes. */
 .accountPopoutButtonWrapper__37e49 { position: relative; z-index: 0; }
 .container__37e49 .accountPopoutButtonWrapper__37e49::after {
@@ -378,7 +379,8 @@ body {
 .avatar__37e49::before {
     animation: lg-halo 3.4s ease-in-out infinite;
 }
-:root[data-lg-self-speaking] .container__37e49 .accountPopoutButtonWrapper__37e49::after {
+:root[data-lg-self-speaking] .container__37e49 .accountPopoutButtonWrapper__37e49::after,
+.container__37e49:has(.avatar__37e49 [class*="avatarBorder_"][style*="status-speaking"]) .accountPopoutButtonWrapper__37e49::after {
     --gk: 1;
     animation: lg-tile-breathe 1.1s 0.8s ease-in-out infinite alternate;
 }
@@ -386,7 +388,8 @@ body {
     padding: 24px;                           /* the title clips (ellipsis), which cut the name's glow at the text box; a bigger box, pulled back by the margin, doesn't */
     margin: -24px;
 }
-:root[data-lg-self-speaking] .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+:root[data-lg-self-speaking] .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"],
+.container__37e49:has(.avatar__37e49 [class*="avatarBorder_"][style*="status-speaking"]) .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
     text-shadow:
         0 0 10px rgba(255, 255, 255, 0.45),
         0 0 22px color-mix(in srgb, var(--lg-speak-glow) 80%, transparent);

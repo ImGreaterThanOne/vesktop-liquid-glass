@@ -10,6 +10,8 @@ channel icons, leaf fall when you join a voice channel, light rain over the chat
 | `liquid-glass.theme.css` | the base theme: near-black, neutral glass |
 | `liquid-glass-autumn.theme.css` | the autumn variant (generated from the base by `make-autumn.py`) |
 
+| `liquid-glass-lite.theme.css` / `liquid-glass-autumn-lite.theme.css` | the same looks without blurs, animations and transitions - for slower machines (try these first if the UI lags, e.g. on Windows) |
+
 Use **one** of them at a time.
 
 ## Install
