@@ -132,10 +132,20 @@ body {
     padding-top: var(--custom-guild-list-padding) !important;
     padding-bottom: var(--custom-guild-list-padding);
 }
+/* the server list reserved an 8px scrollbar gutter, so its scroll area was 48px wide and cut the right edge of an open folder's pill
+   (the pill sits 4px in and is 48px wide); no visible scrollbar here, so no gutter */
+.guilds__5e434 [class*="scroller"] {
+    scrollbar-width: none;
+    scrollbar-gutter: auto !important;
+}
 .folderGroup__48112,
 .listItem__650eb {
     width: calc(var(--guildbar-avatar-size, 48px) + var(--custom-guild-list-padding) * 2);
 }
+
+/* Discord sets --custom-overdrag on .sidebar on every frame of a splitter drag; inherited, that restyled all ~3700 elements under the
+   sidebar each frame (only .sidebarResizeHandle reads it). Registered as non-inherited, only the sidebar itself is restyled. */
+@property --custom-overdrag { syntax: "<length>"; inherits: false; initial-value: 0px; }
 
 /* layout: pull the panels apart so the aurora shows between them */
 .sidebar__5e434 {
@@ -150,6 +160,9 @@ body {
 .guilds__5e434 {
     margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--lg-gap));
     margin-right: var(--lg-gap);
+}
+.vc-betterFolders-sidebar {                  /* the wrapper that holds that column: a margin on the nav itself overflowed the wrapper, the gap was 0 */
+    margin-right: 10.5px;
 }
 .sidebarList__5e434 {
     margin-bottom: calc(var(--custom-app-panels-height, 0px) + var(--lg-gap));
@@ -234,6 +247,9 @@ body {
     height: auto;
 }
 
+/* the sidebar clipped the account pill's outer shine at its left edge (the pill sits flush against it) */
+.sidebar__5e434 { overflow: visible !important; }
+
 /* ---- user panel: pill with a big avatar that fits its rounded end ------------ */
 .container__37e49 {
     display: flex;
@@ -244,7 +260,7 @@ body {
     margin: 0 !important;
     padding: var(--lg-pill-pad) 14px var(--lg-pill-pad) var(--lg-pill-pad);
     border-radius: 999px;
-    overflow: hidden;                        /* the glow lives inside the pill: the window edge can't cut it */
+    overflow: visible;                       /* the avatar's ring and shine live OUTSIDE the pill; only the colour wash below is clipped to its shape */
 }
 .container__37e49::before {                  /* ambient wash: the avatar, blurred and stretched, so it is coloured like it */
     content: "";
@@ -255,6 +271,7 @@ body {
     opacity: 0.6;
     -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 62%);
             mask-image: linear-gradient(90deg, #000 0%, transparent 62%);
+    clip-path: inset(12px round 999px);       /* ::before sticks out by 12px (blur); cut it back to the pill */
     z-index: -1;
     pointer-events: none;
 }
@@ -319,6 +336,58 @@ body {
     font-weight: 500;
     line-height: 17px !important;
     height: auto !important;
+}
+
+/* ---- the account pill reacts when YOU talk (same grow-out ring + fading glow as in the voice chat) ----
+   Discord shows no speaking state here, so the bridge's page hook sets data-lg-self-speaking on <html>
+   (SpeakingStore.isCurrentUserSpeaking, polled every 120 ms). The ring + glow is an overlay ::after of the (unzoomed)
+   button wrapper sized to the avatar (--lg-av zoom is applied by hand, so it stays sharp: a filter on the zoomed
+   avatar rasterised it blurry), with a hole cut out around the status dot so the glow never lands on it.
+   --gk/--gb as for the cards. Idle: the rim light turns slowly and the avatar-coloured halo breathes. */
+.accountPopoutButtonWrapper__37e49 { position: relative; z-index: 0; }
+.container__37e49 .accountPopoutButtonWrapper__37e49::after {
+    --s: calc(32px * var(--lg-av));
+    content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%;
+    width: var(--s); height: var(--s); border-radius: 50%; pointer-events: none;
+    box-shadow:
+        0 0 0 calc(2.6px * var(--lg-av) * var(--gk)) color-mix(in srgb, var(--lg-speak) calc(100% * var(--gk)), transparent),
+        0 0 calc(7px * var(--lg-av) * var(--gk) * var(--gb)) calc(2.5px * var(--lg-av) * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(95% * var(--gk)), transparent),
+        0 0 calc(18px * var(--lg-av) * var(--gk) * var(--gb)) calc(6px * var(--lg-av) * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(55% * var(--gk)), transparent) !important;
+    z-index: 1;                              /* above the avatar's halo (which would paint over it); the status dot is a copy at z-index 2, so it stays on top */
+    transition: --gk 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.32s var(--lg-spring);
+}
+/* the online status marker wears the voice chat's green instead of Discord's default one */
+.avatar__37e49 rect[fill="#45a366"] { fill: var(--lg-speak); }
+/* The status marker lives inside the avatar's svg, below the avatar's glow layer (which must stay above the avatar to pick up its colours),
+   so the glow washed over it. While online, an identical dot (a 10/32 circle at 27/32,27/32 of the avatar box) is drawn above everything. */
+.container__37e49 .accountPopoutButtonWrapper__37e49:has(.avatar__37e49 rect[fill="#45a366"])::before {
+    --s: calc(32px * var(--lg-av));
+    content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%; z-index: 2; pointer-events: none;
+    width: var(--s); height: var(--s);
+    background: radial-gradient(circle at 84.375% 84.375%, var(--lg-speak) calc(var(--s) * 0.15625 - 0.4px), transparent calc(var(--s) * 0.15625 + 0.4px)) !important;
+    box-shadow: none !important;
+    transition: scale 0.32s var(--lg-spring);
+}
+.container__37e49 .accountPopoutButtonWrapper__37e49:has(.avatar__37e49 rect[fill="#45a366"]):hover::before {
+    scale: 1.12;                              /* the avatar swells on hover; the dot swells with it */
+}
+/* Discord's own green speaking border on the pill avatar (an inset box-shadow, rgb 61,158,96) - the ring above replaces it */
+.avatar__37e49 [class*="avatarBorder_"] { box-shadow: none !important; }
+.avatar__37e49::before {
+    animation: lg-halo 3.4s ease-in-out infinite;
+}
+:root[data-lg-self-speaking] .container__37e49 .accountPopoutButtonWrapper__37e49::after {
+    --gk: 1;
+    animation: lg-tile-breathe 1.1s 0.8s ease-in-out infinite alternate;
+}
+.nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+    padding: 24px;                           /* the title clips (ellipsis), which cut the name's glow at the text box; a bigger box, pulled back by the margin, doesn't */
+    margin: -24px;
+}
+:root[data-lg-self-speaking] .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.45),
+        0 0 22px color-mix(in srgb, var(--lg-speak-glow) 80%, transparent);
 }
 
 /* no grey hover plate behind the avatar + name: the swell and glow are the hover feedback */
@@ -400,6 +469,81 @@ body {
     scale: 0.92 !important;
 }
 
+/* call control bar (mic, camera, share screen, activities, soundboard, more): the same round glass discs as the account
+   pill, without the little device dropdown carets (the carets are the .attachedCaret buttons next to mic / camera / share),
+   each flows in like the rest and swells on hover; a switched-on one (share screen) glows green. */
+.centerControls_bfe55a [class*="attachedCaret_"] {
+    display: none !important;
+}
+.centerControls_bfe55a [class*="attachedCaretButtonContainer_"] {
+    width: auto !important;
+}
+.centerControls_bfe55a [class*="buttonSection_"] {
+    border-radius: 999px !important;
+    gap: 4px;
+    padding-inline: 6px;
+}
+.centerControls_bfe55a button[class*="centerButton_"] {
+    width: 40px;
+    height: 40px;
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.18), transparent 60%),
+        rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50% !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 3px 10px rgba(0, 0, 0, 0.35);
+    animation: lg-flow-small 0.45s var(--lg-out) backwards;
+    transition: scale 0.26s var(--lg-spring), box-shadow 0.3s var(--lg-ease), filter 0.25s var(--lg-ease), background-color 0.25s var(--lg-ease);
+}
+.centerControls_bfe55a button[class*="centerButton_"]:hover {
+    scale: 1.18;
+    filter: brightness(1.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.24), 0 5px 14px rgba(0, 0, 0, 0.4);
+}
+.centerControls_bfe55a button[class*="centerButton_"]:active {
+    scale: 0.92;
+}
+.centerControls_bfe55a button[class*="centerButton_"][class*="greenGlow_"] {
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.22), transparent 60%),
+        color-mix(in srgb, var(--lg-speak) 26%, transparent) !important;
+    border-color: color-mix(in srgb, var(--lg-speak) 55%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 18px color-mix(in srgb, var(--lg-speak) 45%, transparent), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+/* the red hang-up button stays a wide red glass pill (it is also a .centerButton, so it has to be set apart from the grey discs) */
+.centerControls_bfe55a button[class*="disconnect_"] {
+    width: 64px;
+    border-radius: 999px !important;
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.28), transparent 60%),
+        color-mix(in srgb, #e5373d 88%, transparent) !important;
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 18px color-mix(in srgb, #e5373d 40%, transparent), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+/* voice connection card, the two small buttons in its status row (noise suppression, disconnect): round glass discs like the others
+   (disconnect here is grey on purpose; the red one is in the call bar) */
+.wrapper_e131a9 button[class*="lookBlank_"] {
+    width: 34px;
+    height: 34px;
+    background:
+        radial-gradient(130% 150% at 18% 0%, rgba(255, 255, 255, 0.18), transparent 60%),
+        rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50% !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 3px 10px rgba(0, 0, 0, 0.35);
+    animation: lg-flow-small 0.45s var(--lg-out) backwards;
+    transition: scale 0.26s var(--lg-spring), box-shadow 0.3s var(--lg-ease), filter 0.25s var(--lg-ease);
+}
+.wrapper_e131a9 button[class*="lookBlank_"]:hover {
+    scale: 1.18;
+    filter: brightness(1.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.24), 0 5px 14px rgba(0, 0, 0, 0.4);
+}
+.wrapper_e131a9 button[class*="lookBlank_"]:active {
+    scale: 0.92;
+}
+
 /* voice-card action buttons (camera, share screen, activities, soundboard): glass pills that
    swell and light up like the mic / headphones do; a switched-on one glows green */
 .actionButtons_e131a9 button[class*="buttonColor_"] {
@@ -433,8 +577,7 @@ body {
     0%, 100% { opacity: 0.85; }
     50%      { opacity: 1; }
 }
-.avatar__37e49,
-.nameTag__37e49 {
+.nameTag__37e49 {                            /* (the avatar's own transition, with the speaking ring, is in the block above) */
     transition: scale 0.32s var(--lg-spring);
 }
 .avatar__37e49::before {
@@ -456,12 +599,12 @@ body {
     scale: 1.06;
 }
 .accountPopoutButtonWrapper__37e49:hover .avatar__37e49::before {
-    inset: -19px;
-    backdrop-filter: blur(12px) saturate(3) brightness(1.5);
+    inset: -16px;
+    backdrop-filter: blur(10px) saturate(2.8) brightness(1.4);
     animation: lg-halo 1.8s ease-in-out infinite;
 }
 .container__37e49:has(.accountPopoutButtonWrapper__37e49:hover)::before {
-    opacity: 0.95;
+    opacity: 0.78;
 }
 .accountPopoutButtonWrapper__37e49:hover .nameTag__37e49 .panelTitleContainer__37e49 [class*="title_"] {
     text-shadow:
@@ -553,7 +696,7 @@ body {
 }
 [class*="menu_"],
 [class*="popout_"],
-[role="dialog"] {
+[role="dialog"]:not(:has([class*="imageWrapper_"], [class*="carouselModal"], video)) {      /* the image / video viewer is a full-screen layer: no glass panel (blur, border, rounded corners) on it */
     background: var(--lg-menu);
     backdrop-filter: blur(34px) saturate(190%) brightness(1.1);
     border: 1px solid var(--lg-rim);
@@ -632,7 +775,7 @@ button[class*="lookFilled_"] {
 }
 [class*="menu_"],
 [class*="popout_"],
-[role="dialog"] {
+[role="dialog"]:not(:has([class*="imageWrapper_"], [class*="carouselModal"], video)) {      /* not the image / video viewer: its clip-path reveal collapsed the picture into its centre */
     animation: lg-reveal 0.45s var(--lg-out) backwards;
 }
 
@@ -680,7 +823,7 @@ button[class*="lookFilled_"] {
 /* wide things */
 [class*="wrapperCommon_"][class*="clickable_"],
 [class*="embedWrapper_"],
-[class*="imageWrapper_"],
+[id^="chat-messages-"] [class*="imageWrapper_"],       /* images in messages only: the image viewer's own imageWrapper is placed by Discord and must not scale in from its centre */
 [class*="messageAttachment_"] {
     animation: lg-flow-row 0.42s var(--lg-out) backwards;
 }
@@ -767,11 +910,16 @@ button[class*="lookBlank_"]:active  { scale: 0.9; }
 .member_c8ffbb {
     transition: translate 0.28s var(--lg-spring), background-color 0.18s var(--lg-ease);
 }
-[class*="containerDefault_"] [class*="link_"]:hover,
-[class*="wrapperCommon_"][class*="clickable_"]:hover,
 [data-list-item-id^="private-channels"]:hover,
 .member_c8ffbb:hover {
     translate: 3px 0;
+}
+/* channel rows slide right on hover again; they are 6px narrower at rest, so the 4px slide never pushes their right end past the list's edge */
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]) {
+    margin-right: 6px;
+}
+:is([class*="containerDefault_"] [class*="link_"], [class*="wrapperCommon_"][class*="clickable_"]):hover {
+    translate: 4px 0;
 }
 [class*="containerDefault_"] [class*="link_"]:active,
 [class*="wrapperCommon_"][class*="clickable_"]:active,
@@ -890,6 +1038,9 @@ li[id^="chat-messages-"]:has([class*="mentioned_"]) {
 [id^="chat-messages-"] {
     animation: lg-flow-row 0.25s var(--lg-out) backwards;
 }
+/* your own message: the "sending" row is replaced by a new one when sent - that one is marked by the bridge (vesktop-bridge.py)
+   and does not play the entrance again, so it appears once */
+[id^="chat-messages-"][data-lg-noanim] { animation: none !important; }
 [class*="buttonContainer_"] {
     animation: lg-pop 0.18s var(--lg-spring) both;
 }
@@ -954,16 +1105,12 @@ li[id^="chat-messages-"]:has([class*="mentioned_"]) {
     --lg-speak: var(--status-speaking, #23a55a);
     --lg-speak-glow: color-mix(in srgb, var(--lg-speak) 70%, #7dffa8);   /* brighter than the ring so it reads on dark */
 }
-@keyframes lg-speak-glow {                 /* the glow breathes while the person keeps talking */
-    from { box-shadow: var(--sp-glow-lo); }
-    to   { box-shadow: var(--sp-glow-hi); }
-}
 .avatarWrapper_fb62e2,
 .avatarSpeakingOutline_adebba {
     outline: 0 solid transparent;
     transition:
         outline-width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), outline-color 0.25s var(--lg-ease),   /* the ring only grows out of the edge and back into it: no overshoot */
-        scale 0.3s var(--lg-spring), box-shadow 0.35s var(--lg-ease);
+        scale 0.3s var(--lg-spring), --gk 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 /* Discord's own speaking border around the whole tile (an inline inset box-shadow) is gone: the
    avatar's ring and glow are the speaking cue now. Only the visual is removed - the inline style
@@ -971,25 +1118,57 @@ li[id^="chat-messages-"]:has([class*="mentioned_"]) {
 .border__2f4f7 {
     box-shadow: none !important;
 }
+/* the speaking card glows green OUTSIDE its edge. The glow is NOT on the tile (it clips, and a neighbour's background
+   would paint over its shadow) but on an overlay ::after of the tile's wrapper (unclipped, same size): z-index 5 there puts
+   it above every tile of the call at all times, so no card ever changes layer when someone starts or stops talking
+   (no ancestor between the wrappers makes a stacking context). The outer box-shadow of the overlay is never drawn
+   inside its own box, so the tile's picture is untouched. --gk (0..1) is transitioned (grow out / fade back),
+   --gb is the breathing multiplier while speaking. */
+@property --gk { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --gb { syntax: "<number>"; inherits: false; initial-value: 1; }
+@keyframes lg-tile-breathe { from { --gb: 1; } to { --gb: 1.25; } }
+.wrapper__2f4f7::after {
+    content: ""; position: absolute; inset: 0; border-radius: 8px; pointer-events: none; z-index: 5;
+    box-shadow:
+        0 0 calc(30px * var(--gk) * var(--gb)) calc(6px * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(80% * var(--gk)), transparent),
+        0 0 calc(90px * var(--gk) * var(--gb)) calc(16px * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(42% * var(--gk)), transparent);
+    transition: --gk 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.wrapper__2f4f7:has(.border__2f4f7[style*="status-speaking"])::after {
+    --gk: 1;
+    animation: lg-tile-breathe 1.1s 0.8s ease-in-out infinite alternate;
+}
+/* the call grid is a scroll container that clips 9px outside the cards, which sliced a speaking card's glow with a hard line at the grid's
+   edge. `overflow: clip` + a clip margin lets the glow reach 60px out (the call window itself still stops it at the app border);
+   the cost is that the grid cannot be scrolled, which Discord does not need while it fits the tiles to the window. */
+[class*="videoGrid_"][class*="scroller"] {
+    overflow: clip !important;
+    overflow-clip-margin: 60px;
+}
+/* compact call strip: its wrapper is exactly one tile tall and clips, which cut the outer glow with a hard edge */
+[class*="participantsWrapperAnimated_"] { overflow: clip !important; overflow-clip-margin: 110px; }
+/* avatars (call tile's big one, voice-list small one): the same grow-out / fade-away glow as the card, driven by --gk/--gb
+   (so it also works in avatar-only calls where there is no card around the avatar) */
+.avatarWrapper_fb62e2, .avatarSpeakingOutline_adebba {
+    box-shadow:
+        0 0 calc(var(--ga, 30px) * var(--gk) * var(--gb)) calc(var(--ga, 30px) * 0.22 * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(90% * var(--gk)), transparent),
+        0 0 calc(var(--ga, 30px) * 2.4 * var(--gk) * var(--gb)) calc(var(--ga, 30px) * 0.55 * var(--gk) * var(--gb)) color-mix(in srgb, var(--lg-speak-glow) calc(50% * var(--gk)), transparent);
+}
 /* call tiles (big avatar) */
 .tile__2f4f7:has(.border__2f4f7[style*="status-speaking"]) .avatarWrapper_fb62e2 {
-    --sp-glow-lo: 0 0 22px 5px color-mix(in srgb, var(--lg-speak-glow) 75%, transparent), 0 0 52px 12px color-mix(in srgb, var(--lg-speak-glow) 40%, transparent);
-    --sp-glow-hi: 0 0 34px 9px color-mix(in srgb, var(--lg-speak-glow) 95%, transparent), 0 0 80px 22px color-mix(in srgb, var(--lg-speak-glow) 60%, transparent);
+    --ga: 34px; --gk: 1;
     outline: 4px solid var(--lg-speak);
     outline-offset: 0;
     scale: 1.08;
-    box-shadow: var(--sp-glow-lo);
-    animation: lg-speak-glow 1.1s 0.3s ease-in-out infinite alternate;
+    animation: lg-tile-breathe 1.1s 0.8s ease-in-out infinite alternate;
 }
 /* voice channel list (small avatar) */
 .speaking_adebba.speaking_adebba .avatarSpeakingOutline_adebba.avatarSpeakingOutline_adebba {
-    --sp-glow-lo: 0 0 9px 2px color-mix(in srgb, var(--lg-speak-glow) 80%, transparent);
-    --sp-glow-hi: 0 0 15px 4px color-mix(in srgb, var(--lg-speak-glow) 100%, transparent);
+    --ga: 9px; --gk: 1;
     outline: 2px solid var(--lg-speak);
     outline-offset: 0;
     scale: 1.14;
-    box-shadow: var(--sp-glow-lo);
-    animation: lg-speak-glow 1.1s 0.3s ease-in-out infinite alternate;
+    animation: lg-tile-breathe 1.1s 0.8s ease-in-out infinite alternate;
 }
 
 /* unread mention counters breathe */
