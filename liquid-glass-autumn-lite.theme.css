@@ -747,6 +747,16 @@ button[class*="lookFilled_"] {
 }
 
 
+/* The detached call / stream window (Discord's "pop out") is a frameless window: its root and its wrapper carry a popout_ class, which the
+   glass-panel and reveal rules above would take for a floating popover (blur, border, rounded corners, clip-path reveal) - they are excluded there
+   (:not([class*="noChat"])...), and since the window has no title bar the top bar of the call becomes the drag handle (buttons stay clickable). */
+[class*="noChat"][class*="popout"] [class*="headerBar_"] {
+    -webkit-app-region: drag;
+}
+[class*="noChat"][class*="popout"] [class*="headerBar_"] :is(button, a, input, [role="button"], [class*="toolbar_"], [class*="pill_"], [class*="icon_"]) {
+    -webkit-app-region: no-drag;
+}
+
 /* ---- materialise: whatever appears swells out of its own centre, like a droplet condensing ---- */
 /* Entry animations only run when an element is created, so this covers app start, switching
    chats, joining a call, new messages, opening menus. Each one starts small and blurred at its

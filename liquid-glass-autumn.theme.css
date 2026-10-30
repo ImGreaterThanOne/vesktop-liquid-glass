@@ -700,7 +700,7 @@ body {
     backdrop-filter: blur(18px) saturate(160%);
 }
 [class*="menu_"],
-[class*="popout_"],
+[class*="popout_"]:not([class*="noChat"]):not(:has([class*="noChat"])),
 [role="dialog"]:not(:has([class*="imageWrapper_"], [class*="carouselModal"], video)) {      /* the image / video viewer is a full-screen layer: no glass panel (blur, border, rounded corners) on it */
     background: var(--lg-menu);
     backdrop-filter: blur(34px) saturate(190%) brightness(1.1);
@@ -779,9 +779,19 @@ button[class*="lookFilled_"] {
     to   { opacity: 1; filter: blur(0);    clip-path: inset(0 0 0 0 round 20px); }
 }
 [class*="menu_"],
-[class*="popout_"],
+[class*="popout_"]:not([class*="noChat"]):not(:has([class*="noChat"])),
 [role="dialog"]:not(:has([class*="imageWrapper_"], [class*="carouselModal"], video)) {      /* not the image / video viewer: its clip-path reveal collapsed the picture into its centre */
     animation: lg-reveal 0.45s var(--lg-out) backwards;
+}
+
+/* The detached call / stream window (Discord's "pop out") is a frameless window: its root and its wrapper carry a popout_ class, which the
+   glass-panel and reveal rules above would take for a floating popover (blur, border, rounded corners, clip-path reveal) - they are excluded there
+   (:not([class*="noChat"])...), and since the window has no title bar the top bar of the call becomes the drag handle (buttons stay clickable). */
+[class*="noChat"][class*="popout"] [class*="headerBar_"] {
+    -webkit-app-region: drag;
+}
+[class*="noChat"][class*="popout"] [class*="headerBar_"] :is(button, a, input, [role="button"], [class*="toolbar_"], [class*="pill_"], [class*="icon_"]) {
+    -webkit-app-region: no-drag;
 }
 
 /* ---- materialise: whatever appears swells out of its own centre, like a droplet condensing ---- */
