@@ -1458,7 +1458,7 @@ button[class*="lookFilled_"][class*="colorBrand_"]:not([class*="buttonColor_"]) 
             mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent);
 }
 [class*="cooldownWrapper_"] {                          /* the slow-mode counter sits above the input's right end, where the presents stand: keep it clear of them */
-    margin-right: 150px;
+    margin-right: 215px;
 }
 [class*="channelTextArea_"]::after {                    /* presents standing on the drift at the right end (they always hug the right edge, whatever the width) */
     content: "";
@@ -1480,10 +1480,10 @@ button[class*="lookFilled_"][class*="colorBrand_"]:not([class*="buttonColor_"]) 
 }
 .lg-tree {
     position: absolute;
-    right: 32px;
+    right: 4px;                               /* roughly over the presents, kept inside the chat card */
     bottom: calc(100% - 4px);
-    width: 112px;
-    height: 150px;
+    width: 224px;
+    height: 300px;
     z-index: 3;
     pointer-events: none;                    /* only the painted tree reacts (children below), the box around it does not */
     cursor: pointer;
