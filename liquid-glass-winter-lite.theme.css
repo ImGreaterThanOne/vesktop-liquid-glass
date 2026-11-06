@@ -1406,7 +1406,7 @@ button[class*="lookFilled_"][class*="colorBrand_"]:not([class*="buttonColor_"]) 
 }
 .lg-tree {
     position: absolute;
-    right: 4px;                               /* roughly over the presents, kept inside the chat card */
+    right: -18px;                            /* centred over the presents (6px off at most) while the lowest branch tips stay inside the chat card, which clips overflow at its right edge */
     bottom: calc(100% - 4px);
     width: 224px;
     height: 300px;
