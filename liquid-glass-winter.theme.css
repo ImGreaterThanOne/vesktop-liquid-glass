@@ -1320,7 +1320,6 @@ a[class*="link_"][aria-label*="voice channel"][aria-label*="Private"] svg[class*
     from { background-position: 0 0, 60px 90px, 130px 40px; }
     to   { background-position: -180px 780px, -180px 1130px, -190px 1420px; }
 }
-}
 .chatContent_f75fb0::after {
     content: "";
     position: absolute;
